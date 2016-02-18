@@ -14,13 +14,14 @@ if (isset($_FILES['file']) && !empty($_FILES['file']['name'])) {
             $includefile->bindValue( ':password' , $_POST['password'] );
             $includefile->execute();
             }catch (Exception $e){ print_r ($e);}
-            echo 'OK';
-            echo '<script>document.location.href="index.php";</script>';
+            $ret = array('status' => 'ok');
         }else{
-            echo 'Move Error';
+            $ret = array('error' => 'move_file_error');
         }
     }
 } else {
-    echo 'Upload Error';
+    $ret = array('error' => 'no_file');
 }
+header('Content-Type: application/json');
+echo json_encode($ret);
 exit;
