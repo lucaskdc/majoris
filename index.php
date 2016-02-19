@@ -14,44 +14,19 @@ require('pdo.php');
         }
     
     </style>
-</script>
-    
-    
+
 </head>
 
 <body>
+
+
+
 <p>File Server</p>
 
 <hr />
-<?php
-    if(isset($_GET['action']) && isset($_GET['hashid'])){ //Show a form to send the password to delete.
-        if( ($_GET['action']=='delete' ) && ($_GET['hashid']!=null) ){
-            echo'<form action="index.php" method=POST>
-                PASSWORD to delete: <input type="text" name="password"/>
-                <input type="hidden" name="action" value="delete"/>
-                <input type="hidden" name="hashid" value="'.$_GET['hashid'].'"/>
-                <input type="submit">
-            </form>';
-        }
-    }
-    if( isset($_POST['action']) && isset($_POST['hashid']) ){ //Delete file
-        if( ($_POST['action'] == 'delete') && ($_POST['hashid'] != '') ){
-            $passwordquery = getConnection()->prepare('SELECT password FROM files WHERE hashid = :hashid');
-            $passwordquery->bindValue(':hashid', $_POST['hashid']);
-            $passwordquery->execute();
-            $password = $passwordquery->fetch();
+</hr>
 
-            if($password['password'] == $_POST['password']){
-                $deletequery = getConnection()->prepare('DELETE FROM files WHERE hashid = :hashid');
-                $deletequery->bindValue(':hashid', $_POST['hashid']);
-                $deletequery->execute() or die('DB ERROR');
-                unlink($dir . $_POST['hashid']) or die('UNLINK ERROR');
-            }
-        }
-    }
-?>    
-<hr />
-
+<div id="forms">
 <p>File upload(max100MB):</p>
 <form action="upload.php" method="POST" enctype="multipart/form-data" id="formupload">
     <p>File: <input name="file" type="file" /> </p>
@@ -59,53 +34,11 @@ require('pdo.php');
     <p>Password (to delete): <input name="password" type="text" /> </p>
     <p> <input type="submit" value="Send" /> </p>
 </form>
+</div>
 
 <hr>
-    <div id="preview"></div>
+    <div id="log"></div>
 <hr>
-
-<script>
-    var $formUpload = document.getElementById('formupload'),
-        $preview = document.getElementById('preview'),
-        i = 0;
-
-    $formUpload.addEventListener('submit', function(event){
-    event.preventDefault();
-
-    var xhr = new XMLHttpRequest();
-
-    xhr.open("POST", $formUpload.getAttribute('action'));
-
-    var formData = new FormData($formUpload);
-    formData.append("i", i++);
-    xhr.send(formData);
-
-    xhr.addEventListener('readystatechange', function() {
-        if (xhr.readyState === 4 && xhr.status == 200) {
-        var json = JSON.parse(xhr.responseText);
-
-        if (!json.error && json.status === 'ok') {
-            $preview.innerHTML += '<br />Enviado!!';
-        } else {
-            $preview.innerHTML = 'Arquivo não enviado';
-        }
-
-        }
-    });
-
-    xhr.upload.addEventListener("progress", function(e) {
-        if (e.lengthComputable) {
-        var percentage = Math.round((e.loaded * 100) / e.total);
-        $preview.innerHTML = String(percentage) + '%';
-        }
-    }, false);
-
-    xhr.upload.addEventListener("load", function(e){
-        $preview.innerHTML = String(100) + '%';
-    }, false);
-
-    }, false);
-</script>
 
 <p>File download</p>
 <table>
@@ -116,7 +49,7 @@ require('pdo.php');
         <td>Actions</td>
     </tr>
     <?php
-        $queryfiles = getConnection()->prepare("SELECT name,size,uploaddate,hashid FROM files");
+        $queryfiles = getConnection()->prepare("SELECT name,size,uploaddate,hashid FROM files ORDER BY uploaddate DESC");
         $queryfiles->execute();
         $file = $queryfiles->fetch();
         while( $file['name']!='' ){
@@ -124,11 +57,95 @@ require('pdo.php');
                             <td>' .$file['name']. '</td>
                             <td>' .$file['size']. '</td>
                             <td>' .$file['uploaddate']. '</td>
-                            <td> <a href="download.php?action=download&hashid=' .$file['hashid']. '">Download</a> <a href="index.php?action=delete&hashid=' .$file['hashid']. '">Delete</a> </td>
+                            <td> <a href="download.php?action=download&hashid=' .$file['hashid']. '">Download</a> <a href="javascript:deletefile(\'' .$file['hashid']. '\',\'' .$file['name']. '\');">Delete</a> </td>
             </tr>';
             $file = $queryfiles->fetch();
         }
     ?>       
 </table>
 </body>
+<script>
+    var $formUpload = document.getElementById('formupload'),
+        $preview = document.getElementById('log'),
+        i = 0;
+
+    $formUpload.addEventListener('submit', function(event){
+        event.preventDefault();
+
+        var xhr = new XMLHttpRequest();
+
+        xhr.open("POST", $formUpload.getAttribute('action'));
+
+        var formData = new FormData($formUpload);
+        formData.append("i", i++);
+        xhr.send(formData);
+
+        xhr.addEventListener('readystatechange', function() {
+            if (xhr.readyState === 4 && xhr.status == 200) {
+            var json = JSON.parse(xhr.responseText);
+
+            if (!json.error && json.status === 'ok') {
+                $preview.innerHTML += '<br />Enviado!!';
+                setTimeout(location.reload(true), 1500);
+            } else {
+                $preview.innerHTML = 'Arquivo não enviado';
+            }
+
+            }
+        });
+
+        xhr.upload.addEventListener("progress", function(e) {
+            if (e.lengthComputable) {
+            var percentage = Math.round((e.loaded * 100) / e.total);
+            $preview.innerHTML = String(percentage) + '%';
+            }
+        }, false);
+
+        xhr.upload.addEventListener("load", function(e){
+            $preview.innerHTML = String(100) + '%';
+        }, false);
+
+    }, false);
+</script>    
+
+<script>
+$forms = document.getElementById("forms");
+function deletefile(hashid, nome){
+    $forms.innerHTML='<p>Are you sure you want to delete "' + nome + '"?'
+    +'<form id="formdelete" action="delete.php" method="POST">'
+    +'Password: <input type="text" name="password"/>'
+    +'<input type="hidden" name="hashid" value="' + hashid + '"/>'
+    +'<input type="submit" value="Delete">'
+    +'</form>';
+    var $formDelete = document.getElementById('formdelete'),
+        $log = document.getElementById('log'),
+        i = 0;
+
+    $formDelete.addEventListener('submit', function(event){
+        event.preventDefault();
+
+        var xhr = new XMLHttpRequest();
+
+        xhr.open("POST", $formDelete.getAttribute('action'));
+
+        var formData = new FormData($formDelete);
+        formData.append("i", i++);
+        xhr.send(formData);
+
+        xhr.addEventListener('readystatechange', function() {
+            if (xhr.readyState === 4 && xhr.status == 200) {
+            var json = JSON.parse(xhr.responseText);
+
+            if (!json.error && json.status === 'ok') {
+                $log.innerHTML += '<br />Deletado!!';
+                setTimeout(location.reload(true), 1500);
+            } else {
+                $log.innerHTML = 'Arquivo não deletado';
+            }
+
+            }
+        });
+    }, false);
+}
+</script>
 </html>
