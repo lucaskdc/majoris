@@ -1,19 +1,25 @@
 <?php
+error_reporting(E_ERROR); 
+ini_set('display_errors', 0);
+
 require('config.php');
 require('pdo.php');
 if (isset($_FILES['file']) && !empty($_FILES['file']['name'])) {
     if($_FILES['file']!=null){
-        $hashid = hash($hashmethod, uniqid());
-        if(move_uploaded_file($_FILES['file']['tmp_name'], $dir . $hashid ) ){
+        $uniqid = hash('sha256', uniqid(mt_rand(), true) );
+        if(move_uploaded_file($_FILES['file']['tmp_name'], $filesdir . $uniqid ) ){
             try{
-            $includefile = getConnection()->prepare('INSERT INTO files (name, size, uploaddate, hashid, password) VALUES (:name, :size, :uploaddate, :hashid, :password)');
-            $includefile->bindValue( ':name', $_FILES['file']['name'] );
-            $includefile->bindValue( ':size' , filesize($dir . $hashid) );
-            $includefile->bindValue( ':uploaddate' , date('Y-m-d H:m:s', time()) );
-            $includefile->bindValue( ':hashid' , $hashid );
-            $includefile->bindValue( ':password' , $_POST['password'] );
-            $includefile->execute();
-            }catch (Exception $e){ print_r ($e);}
+            $insertfile = getConnection()->prepare('INSERT INTO files (name, size, uploaddate, uniqid, password) VALUES (:name, :size, :uploaddate, :uniqid, :password)');
+            $insertfile->bindValue( ':name', $_FILES['file']['name'] );
+            $insertfile->bindValue( ':size' , filesize($filesdir . $uniqid) );
+            $insertfile->bindValue( ':uploaddate' , date('Y-m-d H:m:s', time()) );
+            $insertfile->bindValue( ':uniqid' , $uniqid);
+            $insertfile->bindValue( ':password' , $_POST['password'] );
+            $insertfile->execute();
+            }catch (Exception $e){
+                echo $e->getMessage();
+                die($e);
+            }
             $ret = array('status' => 'ok');
         }else{
             $ret = array('error' => 'move_file_error');

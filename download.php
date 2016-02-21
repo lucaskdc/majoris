@@ -1,11 +1,11 @@
 <?php
 require('config.php');
 require('pdo.php');
-if(isset($_GET['action']) && isset($_GET['hashid'])){
-    if( ($_GET['action']=='download') && ($_GET['hashid']!=null) ){
+if(isset($_GET['action']) && isset($_GET['uniqid'])){
+    if( ($_GET['action']=='download') && ($_GET['uniqid']!=null) ){
         //DOWNLOAD
-        $sql = getConnection()->prepare('SELECT name, size FROM files WHERE hashid = :hashid');
-        $sql->bindValue(':hashid', $_GET['hashid']);
+        $sql = getConnection()->prepare('SELECT name, size FROM files WHERE uniqid = :uniqid');
+        $sql->bindValue(':uniqid', $_GET['uniqid']);
         $sql->execute();
         $file = $sql->fetch();
         $name = $file['name'];
@@ -13,12 +13,12 @@ if(isset($_GET['action']) && isset($_GET['hashid'])){
         if($name!=''){
             $mime = new finfo;            
             header('Content-Description: File Transfer');
-            header('Content-type: ' . $mime->file($dir . $_GET['hashid'] , FILEINFO_MIME) );
+            header('Content-type: ' . $mime->file($filesdir . $_GET['uniqid'] , FILEINFO_MIME) );
             header('Content-Disposition: attachment; filename="'.$name.'"');
             header('Content-Transfer-Encoding: binary');
             header('Expires: 0');
             header('Content-Length: ' . $size);
-            readfile($dir.$_GET['hashid']);
+            readfile($dir.$_GET['uniqid']);
         }
     }
 }
