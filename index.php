@@ -14,6 +14,18 @@ require('pdo.php');
         }
     
     </style>
+    
+    <script>
+        function humanizeSize(size, precision){
+            var i = 0;
+            var str = ["B","KiB","MiB","GiB","TiB"];
+            while(size > 1024){
+                size = size/1024;
+                i++;
+            }
+            return (Math.round(size*10*precision)/(10*precision)) + " " + str[i];
+        }
+    </script>
 
 </head>
 
@@ -79,37 +91,35 @@ require('pdo.php');
         var formData = new FormData($formUpload);
         formData.append("i", i++);
         xhr.send(formData);
-
+        
         xhr.addEventListener('readystatechange', function() {
             if (xhr.readyState === 4 && xhr.status == 200) {
             var json = JSON.parse(xhr.responseText);
 
             if (!json.error && json.status === 'ok') {
-                $preview.innerHTML += '<br />Enviado!!';
+                $preview.innerHTML += '<br />Uploaded!';
                 setTimeout(location.reload(true), 1500);
             } else {
-                $preview.innerHTML = 'Arquivo não enviado';
+                $preview.innerHTML = 'The file hasn\'t been uploaded.';
             }
 
             }
         });
-
         xhr.upload.addEventListener("progress", function(e) {
             if (e.lengthComputable) {
             var percentage = Math.round((e.loaded * 100) / e.total);
-            $preview.innerHTML = String(percentage) + '%';
+            $preview.innerHTML = "(" +  String(percentage) + "%) " + humanizeSize(e.loaded, 2) + "/" + humanizeSize(e.total, 2);
             }
         }, false);
-
         xhr.upload.addEventListener("load", function(e){
-            $preview.innerHTML = String(100) + '%';
+            $preview.innerHTML = String(100) + "%";
         }, false);
 
     }, false);
 </script>    
 
 <script>
-$forms = document.getElementById("forms");
+var $forms = document.getElementById("forms");
 function deletefile(uniqid, nome){
     $forms.innerHTML='<p>Are you sure you want to delete "' + nome + '"?'
     +'<form id="formdelete" action="delete.php" method="POST">'
@@ -137,14 +147,25 @@ function deletefile(uniqid, nome){
                 var json = JSON.parse(xhr.responseText);
 
                 if (!json.error && json.status === 'ok') {
-                    $log.innerHTML += '<br />Deletado!!';
+                    $log.innerHTML += '<br />OK!';
                     setTimeout(location.reload(true), 1500);
                 } else {
-                    $log.innerHTML = 'Arquivo não deletado';
+                    $log.innerHTML = 'The file hasn\'t been deleted.';
                 }
             }
         });
     }, false);
 }
 </script>
+
+<script>
+    var rows = document.getElementsByTagName("tr");
+    var i = 1;
+    while(i < rows.length){
+        rows[i].getElementsByTagName("td")[1].innerHTML = 
+            humanizeSize(rows[i].getElementsByTagName("td")[1].innerHTML,2);
+        i = i + 1;
+    }
+</script>
+
 </html>
