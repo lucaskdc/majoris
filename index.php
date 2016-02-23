@@ -1,53 +1,56 @@
 <?php
 require('config.php');
 require('pdo.php');
+$maxsize=100;
 ?>
-
+<!DOCTYPE html>
 <html>
-
 <head>
+    <meta charset="utf-8">
+    <link href="https://fonts.googleapis.com/css?family=Share+Tech+Mono" rel="stylesheet" type="text/css">
+        <style type="text/css">
+            body{background-color:#FFF;margin: 16px;padding: 0px;
+                font-family: 'Share Tech Mono';}
+            header{font-size: 26px;}
+            #bunito{margin: 0px;width:900px;margin-top: 16px;margin-bottom: 15px;height: 1px;}
+            #fum100{font-size: 18px;}
+            table, th, td {
+                border: 1px solid black;
+                    font-weight: bold;
+            }
+            #tudo{padding: 20px;margin: 0 auto;margin-top:2%;width:900px;
+                border:2px solid grey;border-radius: 4px;}
+
+        </style>
     <title>File Server</title>
-    <style type="text/css">
-        table, th, td {
-            border: 1px solid black;
-	    font-weight: bold;
-        }
-    
-    </style>
-
 </head>
-
-<body>
-
-
-
-<p>File Server</p>
-
-<hr />
-</hr>
-
-<div id="forms">
-<p>File upload(max100MB):</p>
-<form action="upload.php" method="POST" enctype="multipart/form-data" id="formupload">
-    <p>File: <input name="file" type="file" /> </p>
-    <!-- <p>Change Name: <input name="changename" type="text" /> </p> -->
-    <p>Password (to delete): <input name="password" type="text" /> </p>
-    <p> <input type="submit" value="Send" /> </p>
-</form>
-</div>
-
-<hr>
+<body><section id="tudo">
+    <header>
+        <b>File Server</b>
+        <hr id="bunito" size="1" color="grey" />
+    </header>
+        
+    <section id="forms" style="border-size:4px;border-color:#000;">
+        <p>File upload(Max: <?php echo $maxsize; ?> MiB):</p>
+        <form action="upload.php" method="POST" enctype="multipart/form-data" id="formupload">
+            <p>File: <input name="file" type="file" /> </p>
+            <p>Password <b>(to delete):</b> <input name="password" type="text" /> </p>
+            <p> <input type="submit" value="Enviar" /> </p>
+        </form>
+    </section>
+    <hr id="bunito" size="1" color="grey" />
     <div id="log"></div>
-<hr>
+    <hr id="bunito" size="1" color="grey" />
 
-<p>File download</p>
-<table>
-    <tr>
-        <td>Name</td>
-        <td>Size</td>
-        <td>Upload Date</td>
-        <td>Actions</td>
-    </tr>
+    <section id="filed">
+        <p><b>File Download</b></p>
+        <table>
+            <tr>
+                <td>Name</td>
+                <td>Size</td>
+                <td>Upload Date</td>
+                <td>Actions</td>
+            </tr>
     <?php
         $queryfiles = getConnection()->prepare("SELECT name,size,uploaddate,hashid FROM files ORDER BY uploaddate DESC");
         $queryfiles->execute();
@@ -61,8 +64,9 @@ require('pdo.php');
             </tr>';
             $file = $queryfiles->fetch();
         }
-    ?>       
-</table>
+    ?>
+        </table>
+    </section></section>
 </body>
 <script>
     var $formUpload = document.getElementById('formupload'),
